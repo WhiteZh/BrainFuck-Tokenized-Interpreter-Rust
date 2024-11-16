@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::fmt::Display;
 use std::io::Read;
 
 pub enum Command {
@@ -27,11 +28,11 @@ impl Clone for Command {
     }
 }
 
-impl ToString for Command {
-    fn to_string(&self) -> String {
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use self::Command::*;
 
-        match self {
+        let str = match self {
             IncPtr => String::from("IncPtr"),
             DecPtr => String::from("DecPtr"),
             IncVal => String::from("IncVal"),
@@ -39,7 +40,8 @@ impl ToString for Command {
             Input => String::from("Input"),
             Output => String::from("Output"),
             Group(commands) => format!("Group: {{{}}}", commands.iter().map(|x| x.to_string()).reduce(|a, b| format!("{} {}", a, b)).unwrap_or_else(|| String::from("")))
-        }
+        };
+        write!(f, "{}", str)
     }
 }
 
