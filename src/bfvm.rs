@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::io::Read;
 
 pub enum Command {
     IncPtr,
@@ -26,6 +27,22 @@ impl Clone for Command {
     }
 }
 
+impl ToString for Command {
+    fn to_string(&self) -> String {
+        use self::Command::*;
+
+        match self {
+            IncPtr => String::from("IncPtr"),
+            DecPtr => String::from("DecPtr"),
+            IncVal => String::from("IncVal"),
+            DecVal => String::from("DecVal"),
+            Input => String::from("Input"),
+            Output => String::from("Output"),
+            Group(commands) => format!("Group: {{{}}}", commands.iter().map(|x| x.to_string()).reduce(|a, b| format!("{} {}", a, b)).unwrap_or_else(|| String::from("")))
+        }
+    }
+}
+
 pub enum Error {
     PtrOverflow,
     MemoryOverflow,
@@ -33,7 +50,7 @@ pub enum Error {
 
 pub struct BFVM {
     commands: Vec<Command>,
-    memory: RefCell<Vec<u8>>,
+    memory: RefCell<Vec<i8>>,
     ptr: RefCell<usize>,
 }
 
@@ -79,7 +96,7 @@ impl BFVM {
                     let ptr = self.ptr.borrow();
                     let mut memory = self.memory.borrow_mut();
 
-                    if u8::MAX == (*memory)[*ptr] {
+                    if i8::MAX == (*memory)[*ptr] {
                         return Err(MemoryOverflow);
                     }
                     (*memory)[*ptr] += 1;
@@ -88,28 +105,34 @@ impl BFVM {
                     let ptr = self.ptr.borrow();
                     let mut memory = self.memory.borrow_mut();
 
-                    if u8::MIN == (*memory)[*ptr] {
+                    if i8::MIN == (*memory)[*ptr] {
                         return Err(MemoryOverflow);
                     }
                     (*memory)[*ptr] -= 1;
                 }
                 Command::Group(subcommands) => {
-                    match self.run(subcommands) {
-                        error @ Err(_) => {
-                            return error;
+                    while {
+                        let ptr = self.ptr.borrow();
+                        let memory = self.memory.borrow();
+                        (*memory)[*ptr] != 0
+                    } {
+                        match self.run(subcommands) {
+                            error @ Err(_) => {
+                                return error;
+                            }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
                 Command::Input => {
-                    let mut buf = String::new();
-                    std::io::stdin().read_line(&mut buf).unwrap();
+                    let mut buf: [u8; 1] = [0u8];
+                    std::io::stdin().read_exact(&mut buf).expect("Failed to read stdin");
                     let mut memory = self.memory.borrow_mut();
                     let ptr = self.ptr.borrow();
-                    (*memory)[*ptr] = buf.as_bytes()[0];
+                    (*memory)[*ptr] = buf[0] as i8;
                 }
                 Command::Output => {
-                    print!("{}", (*self.memory.borrow())[*self.ptr.borrow()])
+                    print!("{}", (*self.memory.borrow())[*self.ptr.borrow()] as u8 as char)
                 }
             }
         }

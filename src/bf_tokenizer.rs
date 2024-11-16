@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use crate::bfvm::Command;
 
-pub fn tokenize(iter: &RefCell<Box<dyn Iterator<Item = char>>>) -> Vec::<Command> {
+pub fn tokenize(iter: &RefCell<Box<dyn Iterator<Item = char> + '_>>) -> Vec::<Command> {
     let mut commands = Vec::<Command>::new();
     
     loop {
