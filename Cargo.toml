@@ -1,5 +1,5 @@
 [package]
-name = "brainFuck-tokenized-interpreter-rust"
+name = "brainfuck-tokenized-interpreter-rust"
 version = "0.1.0"
 edition = "2021"
 

@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "BrainFuck-Tokenized-Interpreter-Rust"
+name = "brainfuck-tokenized-interpreter-rust"
 version = "0.1.0"
